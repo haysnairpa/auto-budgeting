@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -16,9 +16,7 @@ from . import database, gmail, scheduler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     database.init_db()
-    scheduler.start()
     yield
-    scheduler.stop()
 
 
 app = FastAPI(title="AutoBudget", lifespan=lifespan)
@@ -63,7 +61,7 @@ async def auth_callback(
     flow.fetch_token(code=code)
     gmail.save_credentials_from_flow(flow)
 
-    # Kick off an immediate sync in the background
+    # Initial sync right after connecting
     try:
         scheduler.sync_now()
     except Exception:
@@ -107,8 +105,7 @@ async def api_transactions(
 
 @app.post("/api/sync")
 async def api_sync():
-    creds = gmail.get_credentials()
-    if not creds:
+    if not gmail.get_credentials():
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         count = scheduler.sync_now()

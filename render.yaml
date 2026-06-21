@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: autobudget
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: REDIRECT_URI
+        sync: false
+      - key: DATABASE_URL
+        sync: false
